@@ -43,7 +43,7 @@ public final class DecentImpl implements Connector {
                         final Line line) {
         final Optional<eu.decentsoftware.holograms.api.holograms.Hologram> hologramOptimal = this.getHologram(hologram);
 
-        if (!hologramOptimal.isPresent()) {
+        if (hologramOptimal.isEmpty()) {
             return;
         }
 
@@ -65,7 +65,7 @@ public final class DecentImpl implements Connector {
                            final Line line) {
         final Optional<eu.decentsoftware.holograms.api.holograms.Hologram> hologramOptimal = this.getHologram(hologram);
 
-        if (!hologramOptimal.isPresent()) {
+        if (hologramOptimal.isEmpty()) {
             return;
         }
 
@@ -85,7 +85,7 @@ public final class DecentImpl implements Connector {
     public void appendLine(final Hologram hologram, final Line line) {
         final Optional<eu.decentsoftware.holograms.api.holograms.Hologram> hologramOptimal = this.getHologram(hologram);
 
-        if (!hologramOptimal.isPresent()) {
+        if (hologramOptimal.isEmpty()) {
             return;
         }
 
@@ -105,7 +105,7 @@ public final class DecentImpl implements Connector {
     public void clearLines(final Hologram hologram) {
         final Optional<eu.decentsoftware.holograms.api.holograms.Hologram> hologramOptimal = this.getHologram(hologram);
 
-        if (!hologramOptimal.isPresent()) {
+        if (hologramOptimal.isEmpty()) {
             return;
         }
 
@@ -117,7 +117,7 @@ public final class DecentImpl implements Connector {
     public void teleport(final Hologram hologram, final Location location) {
         final Optional<eu.decentsoftware.holograms.api.holograms.Hologram> hologramOptimal = this.getHologram(hologram);
 
-        if (!hologramOptimal.isPresent()) {
+        if (hologramOptimal.isEmpty()) {
             return;
         }
 
@@ -129,7 +129,7 @@ public final class DecentImpl implements Connector {
     public void delete(final Hologram hologram) {
         final Optional<eu.decentsoftware.holograms.api.holograms.Hologram> hologramOptimal = this.getHologram(hologram);
 
-        if (!hologramOptimal.isPresent()) {
+        if (hologramOptimal.isEmpty()) {
             return;
         }
 
@@ -141,7 +141,7 @@ public final class DecentImpl implements Connector {
     public void setVisibleByDefault(final VisibilityManager visibilityManager, final boolean visibleByDefault) {
         final Optional<eu.decentsoftware.holograms.api.holograms.Hologram> hologramOptimal = this.getHologram(visibilityManager.getHologram());
 
-        if (!hologramOptimal.isPresent()) {
+        if (hologramOptimal.isEmpty()) {
             return;
         }
 
