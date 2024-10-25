@@ -26,6 +26,8 @@ public class FancyHologramsImpl implements Connector {
     public Hologram createHologram(Location location) {
         HologramManager manager = getHologramManager();
 
+        Bukkit.getLogger().warning("[HologramBridge] Calling createHologram in FancyHologramsImpl ");
+
         // Generate unique hologram name using ThreadLocalRandom
         String hologramName = "holobridge-" + ThreadLocalRandom.current().nextInt(Integer.MAX_VALUE);
         TextHologramData hologramData = new TextHologramData(hologramName, location);
@@ -38,6 +40,8 @@ public class FancyHologramsImpl implements Connector {
 
         // Create the actual hologram instance
         de.oliver.fancyholograms.api.hologram.Hologram fancyHologram = manager.create(hologramData);
+
+        fancyHologram.createHologram();
 
         // Add the hologram to the manager
         manager.addHologram(fancyHologram);
