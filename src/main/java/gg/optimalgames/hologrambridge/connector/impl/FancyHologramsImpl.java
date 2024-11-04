@@ -18,175 +18,174 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.logging.Level;
 
 public class FancyHologramsImpl implements Connector {
 
     @Override
     public Hologram createHologram(Location location) {
-        HologramManager manager = getHologramManager();
+        TextHologramData textData = new TextHologramData("holobridge-" + ThreadLocalRandom.current().nextInt(Integer.MAX_VALUE), location);
+        textData.setBillboard(Display.Billboard.CENTER);
+        textData.setTextUpdateInterval(10);
+        textData.setPersistent(false);
 
-        Bukkit.getLogger().warning("[HologramBridge] Calling createHologram in FancyHologramsImpl ");
+        textData.removeLine(0);
 
-        // Generate unique hologram name using ThreadLocalRandom
-        String hologramName = "holobridge-" + ThreadLocalRandom.current().nextInt(Integer.MAX_VALUE);
-        TextHologramData hologramData = new TextHologramData(hologramName, location);
+        de.oliver.fancyholograms.api.hologram.Hologram hologram = getHologramManager().create(textData);
 
-        // Configure hologram properties
-        hologramData.setBillboard(Display.Billboard.CENTER);
-        hologramData.setBackground(de.oliver.fancyholograms.api.hologram.Hologram.TRANSPARENT);
-        hologramData.setTextUpdateInterval(10);
-        hologramData.setPersistent(false);  // Ensure hologram is not saved persistently
+        hologram.createHologram();
+        Bukkit.getOnlinePlayers().forEach(hologram::updateShownStateFor);
 
-        // Create the actual hologram instance
-        de.oliver.fancyholograms.api.hologram.Hologram fancyHologram = manager.create(hologramData);
-
-        fancyHologram.createHologram();
-
-        // Add the hologram to the manager
-        manager.addHologram(fancyHologram);
-
-        // Show hologram immediately to all online players
-        fancyHologram.showHologram(Bukkit.getOnlinePlayers());
-
-        // Return the new hologram wrapped in the OptimalHologram class
-        return new OptimalHologram(this, fancyHologram, location);
+        getHologramManager().addHologram(hologram);
+        return new OptimalHologram(this, hologram, location);
     }
-
 
     @Override
     public void setLine(Hologram hologram, int lineIndex, Line line) {
-        Optional<de.oliver.fancyholograms.api.hologram.Hologram> hologramOptional = getHologram(hologram);
-        if (hologramOptional.isEmpty()) return;
+        final Optional<de.oliver.fancyholograms.api.hologram.Hologram> hologramOptional = getHologram(hologram);
 
-        de.oliver.fancyholograms.api.hologram.Hologram fancyHologram = hologramOptional.get();
+        if (hologramOptional.isEmpty()) {
+            return;
+        }
+
+        final de.oliver.fancyholograms.api.hologram.Hologram fancyHologram = hologramOptional.get();
+
         if (line instanceof TextLine) {
             TextHologramData data = (TextHologramData) fancyHologram.getData();
-            List<String> textLines = new ArrayList<>(data.getText());
+            List<String> oldLines = data.getText();
+            List<String> newLines = new ArrayList<>();
 
-            // Adjust the line list only if needed to avoid duplication
-            if (lineIndex < textLines.size()) {
-                textLines.set(lineIndex, ((TextLine) line).getText());
-            } else {
-                textLines.add(((TextLine) line).getText());
+            for (int i = 0; i < data.getText().size(); i++) {
+                if (i == lineIndex) newLines.add(((TextLine) line).getText());
+                else newLines.add(oldLines.get(i));
             }
 
-            // Set the updated text
-            data.setText(textLines);
-
-            // Update visibility
-            fancyHologram.showHologram(Bukkit.getOnlinePlayers());
-
-            Bukkit.getLogger().log(Level.WARNING, textLines.toString());
-        } else {
-            throw new IllegalArgumentException("Only TextLine is supported currently.");
-        }
+            data.setText(newLines);
+        } else throw new IllegalArgumentException("only TextLine is supported currently");
     }
-
 
     @Override
     public void updateLine(Hologram hologram, int lineIndex, Line line) {
-        setLine(hologram, lineIndex, line);  // Reuse setLine method for updating since it handles index logic.
+        final Optional<de.oliver.fancyholograms.api.hologram.Hologram> hologramOptional = getHologram(hologram);
+
+        if (hologramOptional.isEmpty()) {
+            return;
+        }
+
+        final de.oliver.fancyholograms.api.hologram.Hologram fancyHologram = hologramOptional.get();
+
+        if (line instanceof TextLine) {
+            TextHologramData data = (TextHologramData) fancyHologram.getData();
+            List<String> oldLines = data.getText();
+            List<String> newLines = new ArrayList<>();
+
+            for (int i = 0; i < data.getText().size(); i++) {
+                if (i == lineIndex) newLines.add(((TextLine) line).getText());
+                else newLines.add(oldLines.get(i));
+            }
+
+            data.setText(newLines);
+        } else throw new IllegalArgumentException("only TextLine is supported currently");
     }
 
     @Override
     public void appendLine(Hologram hologram, Line line) {
-        Optional<de.oliver.fancyholograms.api.hologram.Hologram> hologramOptional = getHologram(hologram);
-        if (hologramOptional.isEmpty()) return;
+        final Optional<de.oliver.fancyholograms.api.hologram.Hologram> hologramOptional = getHologram(hologram);
 
-        de.oliver.fancyholograms.api.hologram.Hologram fancyHologram = hologramOptional.get();
+        if (hologramOptional.isEmpty()) {
+            return;
+        }
+
+        final de.oliver.fancyholograms.api.hologram.Hologram fancyHologram = hologramOptional.get();
+
         if (line instanceof TextLine) {
             TextHologramData data = (TextHologramData) fancyHologram.getData();
-            List<String> textLines = new ArrayList<>(data.getText());
-
-            // Append the new line only if it does not already exist
-            String newLineText = ((TextLine) line).getText();
-            if (!textLines.contains(newLineText)) {
-                textLines.add(newLineText);
-            }
-
-            data.setText(textLines);
-
-            // Refresh the visibility to players
-            fancyHologram.showHologram(Bukkit.getOnlinePlayers());
-        } else {
-            throw new IllegalArgumentException("Only TextLine is supported currently.");
-        }
+            data.addLine(((TextLine) line).getText());
+        } else throw new IllegalArgumentException("only TextLine is supported currently");
     }
-
 
     @Override
     public void clearLines(Hologram hologram) {
-        Optional<de.oliver.fancyholograms.api.hologram.Hologram> hologramOptional = getHologram(hologram);
-        if (hologramOptional.isEmpty()) return;
+        final Optional<de.oliver.fancyholograms.api.hologram.Hologram> hologramOptional = getHologram(hologram);
 
-        de.oliver.fancyholograms.api.hologram.Hologram fancyHologram = hologramOptional.get();
+        if (hologramOptional.isEmpty()) {
+            return;
+        }
+
+        final de.oliver.fancyholograms.api.hologram.Hologram fancyHologram = hologramOptional.get();
         TextHologramData data = (TextHologramData) fancyHologram.getData();
-        data.setText(new ArrayList<>());  // Clear all lines
+        data.setText(new ArrayList<>());
     }
 
     @Override
     public void teleport(Hologram hologram, Location location) {
-        Optional<de.oliver.fancyholograms.api.hologram.Hologram> hologramOptional = getHologram(hologram);
-        if (hologramOptional.isEmpty()) return;
+        final Optional<de.oliver.fancyholograms.api.hologram.Hologram> hologramOptional = getHologram(hologram);
 
-        de.oliver.fancyholograms.api.hologram.Hologram fancyHologram = hologramOptional.get();
-        fancyHologram.getDisplayEntity().teleport(location);  // Safely teleport hologram entity
+        if (hologramOptional.isEmpty()) {
+            return;
+        }
+
+        final de.oliver.fancyholograms.api.hologram.Hologram fancyHologram = hologramOptional.get();
+        fancyHologram.getDisplayEntity().teleport(location);
     }
 
     @Override
     public void delete(Hologram hologram) {
-        Bukkit.getLogger().log(Level.WARNING, "Calling delete method for FancyHolograms");
-        Optional<de.oliver.fancyholograms.api.hologram.Hologram> hologramOptional = getHologram(hologram);
-        if (hologramOptional.isEmpty()) return;
+        final Optional<de.oliver.fancyholograms.api.hologram.Hologram> hologramOptional = getHologram(hologram);
 
-        de.oliver.fancyholograms.api.hologram.Hologram fancyHologram = hologramOptional.get();
+        if (hologramOptional.isEmpty()) {
+            return;
+        }
 
-        // Hide and remove the hologram properly
-        fancyHologram.hideHologram(Bukkit.getOnlinePlayers());
-        fancyHologram.deleteHologram();
+        final de.oliver.fancyholograms.api.hologram.Hologram fancyHologram = hologramOptional.get();
 
-        // Remove from manager
-        getHologramManager().removeHologram(fancyHologram);
+        FancyHologramsPlugin.get().getHologramManager().removeHologram(fancyHologram);
     }
 
     @Override
     public void setVisibleByDefault(VisibilityManager visibilityManager, boolean visibleByDefault) {
-        throw new UnsupportedOperationException("Currently unsupported for FancyHolograms connector.");
+        throw new IllegalArgumentException("currently unsupported for FancyHolograms connector");
     }
 
     @Override
     public void showTo(VisibilityManager visibilityManager, Player player) {
-        Optional<de.oliver.fancyholograms.api.hologram.Hologram> hologramOptional = getHologram(visibilityManager.getHologram());
-        if (hologramOptional.isEmpty()) return;
+        final Optional<de.oliver.fancyholograms.api.hologram.Hologram> hologramOptional = getHologram(visibilityManager.getHologram());
 
-        de.oliver.fancyholograms.api.hologram.Hologram fancyHologram = hologramOptional.get();
-        fancyHologram.showHologram(player);  // Show hologram to a specific player
+        if (hologramOptional.isEmpty()) {
+            return;
+        }
+
+        final de.oliver.fancyholograms.api.hologram.Hologram fancyHologram = hologramOptional.get();
+        fancyHologram.showHologram(player);
     }
 
     @Override
     public void hideTo(VisibilityManager visibilityManager, Player player) {
-        Optional<de.oliver.fancyholograms.api.hologram.Hologram> hologramOptional = getHologram(visibilityManager.getHologram());
-        if (hologramOptional.isEmpty()) return;
+        final Optional<de.oliver.fancyholograms.api.hologram.Hologram> hologramOptional = getHologram(visibilityManager.getHologram());
 
-        de.oliver.fancyholograms.api.hologram.Hologram fancyHologram = hologramOptional.get();
-        fancyHologram.hideHologram(player);  // Hide hologram from a specific player
+        if (hologramOptional.isEmpty()) {
+            return;
+        }
+
+        final de.oliver.fancyholograms.api.hologram.Hologram fancyHologram = hologramOptional.get();
+        fancyHologram.hideHologram(player);
     }
 
     @Override
     public double getHeight(Hologram hologram) {
-        throw new UnsupportedOperationException("Height retrieval is unsupported for FancyHolograms connector.");
+        throw new IllegalArgumentException("currently unsupported for FancyHolograms connector");
     }
 
-    private Optional<de.oliver.fancyholograms.api.hologram.Hologram> getHologram(Hologram hologram) {
-        Object hologramObject = hologram.getHologramAsObject();
+    private Optional<de.oliver.fancyholograms.api.hologram.Hologram> getHologram(final Hologram hologram) {
+        final Object hologramObject = hologram.getHologramAsObject();
+
         if (hologramObject instanceof de.oliver.fancyholograms.api.hologram.Hologram) {
             return Optional.of((de.oliver.fancyholograms.api.hologram.Hologram) hologramObject);
         }
+
         return Optional.empty();
     }
 
     private HologramManager getHologramManager() {
-        return FancyHologramsPlugin.get().getHologramManager();  // Utility to retrieve HologramManager
+        return FancyHologramsPlugin.get().getHologramManager();
     }
 }
