@@ -35,8 +35,17 @@ java{
 
 publishing {
     publications {
-        maven(MavenPublication) {
-            from(components.java)
+        mavenJava(MavenPublication) {
+            from components.java
+
+            groupId = group
+            artifactId = project.name
+            version = project.version
+        }
+    }
+    repositories {
+        maven {
+            url 'https://jitpack.io'
         }
     }
 }
